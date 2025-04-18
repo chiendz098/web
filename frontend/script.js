@@ -1,14 +1,9 @@
 // Check if we're on the Vercel deployment or local development
-const API_URL = (() => {
-    // Check which Vercel deployment we're on
-    if (window.location.hostname === 'web-rho-nine-99.vercel.app') {
-        return 'https://web-rho-nine-99.vercel.app';
-    } else if (window.location.hostname === 'web-fi3rvxt4k-chiens-projects-63720d72.vercel.app') {
-        return 'https://web-fi3rvxt4k-chiens-projects-63720d72.vercel.app';
-    } else {
-        return 'http://127.0.0.1:5001'; // Local development
-    }
-})(); // Flask backend URL
+const API_URL = 'http://127.0.0.1:5001'; // Flask backend URL
+
+// Flag to determine if we're running on Vercel (where backend API is not available)
+const IS_VERCEL_DEPLOYMENT = window.location.hostname === 'web-rho-nine-99.vercel.app' ||
+                            window.location.hostname === 'web-fi3rvxt4k-chiens-projects-63720d72.vercel.app';
 const RANKING_SSE_URL = `${API_URL}/api/rankings/stream`;
 const MAX_AVATAR_SIZE_MB = 2;
 const MAX_SUBMISSION_SIZE_MB = 50;
@@ -933,35 +928,50 @@ async function apiFetch(endpoint, options = {}) {
     console.log(`API Request: ${url}`, { method: options.method || 'GET', headers });
 
     try {
-        // Handle CORS issues by using a proxy or mock data for specific endpoints
-        if (endpoint.includes('/api/flashcards')) {
-            // Mock flashcard data
-            console.log('Using mock flashcard data');
-            return mockFlashcardResponse(endpoint);
-        } else if (endpoint.includes('/api/challenges')) {
-            // Mock challenge data
-            console.log('Using mock challenge data');
-            return mockChallengeResponse();
-        } else if (endpoint.includes('/api/teacher/analytics')) {
-            // Mock teacher analytics data
-            console.log('Using mock teacher analytics data');
-            return mockTeacherAnalyticsResponse();
-        } else if (endpoint.includes('/api/courses')) {
-            // Mock courses data
-            console.log('Using mock courses data');
-            return mockCoursesResponse(endpoint);
-        } else if (endpoint.includes('/api/users/personal-courses')) {
-            // Mock personal courses data
-            console.log('Using mock personal courses data');
-            return mockPersonalCoursesResponse(endpoint, options);
-        } else if (endpoint.includes('/api/mini-game/start')) {
-            // Mock mini-game data
-            console.log('Using mock mini-game data');
-            return mockMiniGameResponse(endpoint);
-        } else if (endpoint.includes('/api/mini-game/submit')) {
-            // Mock mini-game submit response
-            console.log('Using mock mini-game submit response');
-            return mockMiniGameSubmitResponse(options);
+        // When running on Vercel, always use mock data since backend is not available
+        if (IS_VERCEL_DEPLOYMENT || endpoint.includes('/api/flashcards')) {
+            // Use appropriate mock data based on endpoint
+            if (endpoint.includes('/api/auth/login')) {
+                console.log('Using mock login data');
+                return mockLoginResponse(options);
+            } else if (endpoint.includes('/api/auth/signup')) {
+                console.log('Using mock signup data');
+                return mockSignupResponse(options);
+            } else if (endpoint.includes('/api/auth/refresh')) {
+                console.log('Using mock token refresh data');
+                return mockRefreshTokenResponse();
+            } else if (endpoint.includes('/api/users/profile')) {
+                console.log('Using mock profile data');
+                return mockProfileResponse();
+            } else if (endpoint.includes('/api/flashcards')) {
+                console.log('Using mock flashcard data');
+                return mockFlashcardResponse(endpoint);
+            } else if (endpoint.includes('/api/challenges')) {
+                console.log('Using mock challenge data');
+                return mockChallengeResponse();
+            } else if (endpoint.includes('/api/teacher/analytics')) {
+                console.log('Using mock teacher analytics data');
+                return mockTeacherAnalyticsResponse();
+            } else if (endpoint.includes('/api/courses')) {
+                console.log('Using mock courses data');
+                return mockCoursesResponse(endpoint);
+            } else if (endpoint.includes('/api/users/personal-courses')) {
+                console.log('Using mock personal courses data');
+                return mockPersonalCoursesResponse(endpoint, options);
+            } else if (endpoint.includes('/api/mini-game/start')) {
+                console.log('Using mock mini-game data');
+                return mockMiniGameResponse(endpoint);
+            } else if (endpoint.includes('/api/mini-game/submit')) {
+                console.log('Using mock mini-game submit response');
+                return mockMiniGameSubmitResponse(options);
+            } else {
+                console.log('Using generic mock response for:', endpoint);
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ message: 'Mock data success', success: true })
+                };
+            }
         }
 
         // For other endpoints, try the normal fetch
@@ -1431,6 +1441,121 @@ async function mockFeedbackNotifyResponse() {
     };
 
     return mockResponse;
+}
+
+async function mockLoginResponse(options) {
+    // Parse the request body to get login credentials
+    const requestBody = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+    const { email, password } = requestBody || {};
+
+    // Check if credentials match test account
+    if (email === 'quangchienaz3@gmail.com' && password === 'chiendz098') {
+        // Create mock successful login response
+        const mockData = {
+            token: 'mock-jwt-token-for-testing-purposes-only',
+            user: {
+                _id: '67fd090d69bd78dd6325bed5',
+                name: 'Chiến Test',
+                email: 'quangchienaz3@gmail.com',
+                role: 'student',
+                avatar: 'https://ui-avatars.com/api/?name=Chien+Test&background=random&color=fff&size=150',
+                level: 1,
+                progress: 12,
+                points: 70,
+                loginStreak: 2,
+                achievements: ['Tân Binh'],
+                lastLogin: new Date().toISOString(),
+                createdAt: '2025-04-14T13:09:33.338Z'
+            }
+        };
+
+        // Store token in localStorage to simulate real login
+        localStorage.setItem('token', mockData.token);
+
+        return {
+            ok: true,
+            status: 200,
+            json: async () => mockData
+        };
+    } else {
+        // Create mock failed login response
+        return {
+            ok: false,
+            status: 401,
+            json: async () => ({ message: 'Invalid email or password' })
+        };
+    }
+}
+
+async function mockSignupResponse(options) {
+    // Parse the request body to get signup data
+    const requestBody = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+    const { email, name, password } = requestBody || {};
+
+    // Check if email is already in use (simulate validation)
+    if (email === 'quangchienaz3@gmail.com') {
+        return {
+            ok: false,
+            status: 400,
+            json: async () => ({ message: 'Email already in use' })
+        };
+    }
+
+    // Create mock successful signup response
+    return {
+        ok: true,
+        status: 201,
+        json: async () => ({
+            message: 'User registered successfully',
+            user: {
+                _id: 'mock-user-id-' + Date.now(),
+                name,
+                email,
+                role: 'student',
+                createdAt: new Date().toISOString()
+            }
+        })
+    };
+}
+
+async function mockRefreshTokenResponse() {
+    // Create mock token refresh response
+    return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+            token: 'mock-refreshed-jwt-token-' + Date.now(),
+            user: {
+                _id: '67fd090d69bd78dd6325bed5',
+                name: 'Chiến Test',
+                email: 'quangchienaz3@gmail.com',
+                role: 'student',
+                avatar: 'https://ui-avatars.com/api/?name=Chien+Test&background=random&color=fff&size=150'
+            }
+        })
+    };
+}
+
+async function mockProfileResponse() {
+    // Create mock user profile response
+    return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+            _id: '67fd090d69bd78dd6325bed5',
+            name: 'Chiến Test',
+            email: 'quangchienaz3@gmail.com',
+            role: 'student',
+            avatar: 'https://ui-avatars.com/api/?name=Chien+Test&background=random&color=fff&size=150',
+            level: 1,
+            progress: 12,
+            points: 70,
+            loginStreak: 2,
+            achievements: ['Tân Binh'],
+            lastLogin: new Date().toISOString(),
+            createdAt: '2025-04-14T13:09:33.338Z'
+        })
+    };
 }
 
 async function mockStudentProgressResponse(endpoint) {
