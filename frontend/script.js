@@ -1,4 +1,5 @@
-const API_URL = 'http://127.0.0.1:5001'; // Flask backend URL
+// Check if we're on the Vercel deployment or local development
+const API_URL = window.location.hostname === 'web-fi3rvxt4k-chiens-projects-63720d72.vercel.app' ? 'https://web-fi3rvxt4k-chiens-projects-63720d72.vercel.app' : 'http://127.0.0.1:5001'; // Flask backend URL
 const RANKING_SSE_URL = `${API_URL}/api/rankings/stream`;
 const MAX_AVATAR_SIZE_MB = 2;
 const MAX_SUBMISSION_SIZE_MB = 50;
