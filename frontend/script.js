@@ -1,5 +1,14 @@
 // Check if we're on the Vercel deployment or local development
-const API_URL = window.location.hostname === 'web-fi3rvxt4k-chiens-projects-63720d72.vercel.app' ? 'https://web-fi3rvxt4k-chiens-projects-63720d72.vercel.app' : 'http://127.0.0.1:5001'; // Flask backend URL
+const API_URL = (() => {
+    // Check which Vercel deployment we're on
+    if (window.location.hostname === 'web-rho-nine-99.vercel.app') {
+        return 'https://web-rho-nine-99.vercel.app';
+    } else if (window.location.hostname === 'web-fi3rvxt4k-chiens-projects-63720d72.vercel.app') {
+        return 'https://web-fi3rvxt4k-chiens-projects-63720d72.vercel.app';
+    } else {
+        return 'http://127.0.0.1:5001'; // Local development
+    }
+})(); // Flask backend URL
 const RANKING_SSE_URL = `${API_URL}/api/rankings/stream`;
 const MAX_AVATAR_SIZE_MB = 2;
 const MAX_SUBMISSION_SIZE_MB = 50;
